@@ -283,8 +283,13 @@ async function resellerRequest(action, fields = {}) {
   let result;
   try { result = JSON.parse(responseText); }
   catch (_) {
-    console.error('Reseller API returned a non-JSON response:', upstream.status, contentType);
-    throw fail(`The reseller service returned a non-JSON response (HTTP ${upstream.status}, ${contentType || 'unknown content type'}). Check the reseller API endpoint and credentials.`, 502);
+    // Log a short sanitized excerpt to identify provider-side HTML error pages.
+    const excerpt = responseText.replace(/\s+/g, ' ').slice(0, 240);
+    console.error('Reseller API returned non-JSON:', JSON.stringify({ status: upstream.status, contentType, excerpt }));
+    const reason = upstream.status === 403
+      ? 'The reseller provider denied this server request (HTTP 403). Check its API access rules or contact the provider.'
+      : `The reseller service returned non-JSON (HTTP ${upstream.status}, ${contentType || 'unknown content type'}).`;
+    throw fail(reason, 502);
   }
   if (!upstream.ok || result?.status !== 'success') {
     const status = upstream.status || 502;
