@@ -17,7 +17,7 @@ const resellerMasterKey = { value: () => process.env.RESELLER_MASTER_KEY };
 const famGatewayApiKey = { value: () => process.env.FAMGATEWAY_API_KEY };
 const resellerSecrets = [resellerApiKey, resellerMasterKey];
 const apiSecrets = [...resellerSecrets, famGatewayApiKey];
-const RESELLER_API_URL = 'https://inradminpanels.site/api/reseller_v1.php';
+const RESELLER_API_URL = process.env.RESELLER_API_URL || 'https://panelstore.shop/api/v1/index.php';
 const FAMGATEWAY_BASE_URL = 'https://famgateway.in';
 
 const response = (res, status, body) => res.status(status).json(body);
