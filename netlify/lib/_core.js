@@ -310,17 +310,21 @@ function durationDays(value) {
   return n;
 }
 function normalizePlans(payload) {
-  const products = Array.isArray(payload) ? payload : payload?.products || payload?.plans || payload?.items;
+  const products = Array.isArray(payload) ? payload : payload?.products || payload?.plans || payload?.items || payload?.data?.products || payload?.data?.plans || payload?.data?.items;
   if (!Array.isArray(products)) throw fail('Reseller catalog response was not recognized.', 502);
   const plans = [];
   for (const product of products) {
     const productId = String(product.product_id ?? product.pid ?? product.id ?? '');
     const name = String(product.product_name ?? product.name ?? product.title ?? '').trim();
-    const durations = Array.isArray(product.durations) && product.durations.length ? product.durations : [product];
+    // The provider's documented auto-connect response is flat: one item per plan.
+    // Also accept grouped product responses containing a durations array.
+    const durations = Array.isArray(product.durations) && product.durations.length
+      ? product.durations
+      : [product];
     for (const plan of durations) {
-      const planId = String(plan.plan_id ?? plan.planId ?? plan.id ?? product.plan_id ?? '').replace(/^#/, '');
+      const planId = String(plan.plan_id ?? plan.planId ?? plan.id ?? product.plan_id ?? product.planId ?? '').replace(/^#/, '');
       if (!planId || !productId || !name) continue;
-      const duration = String(plan.duration ?? plan.label ?? product.duration ?? '').trim();
+      const duration = String(plan.duration ?? plan.duration_name ?? plan.label ?? product.duration ?? product.duration_name ?? '').trim();
       const cost = Number(plan.reseller_price ?? plan.api_price ?? plan.price ?? product.reseller_price ?? product.api_price ?? product.price ?? 0);
       const retailRaw = plan.website_price ?? plan.normal_price ?? plan.retail_price ?? product.website_price ?? product.normal_price ?? product.retail_price;
       const retailPrice = retailRaw == null || retailRaw === '' ? null : Number(retailRaw);
