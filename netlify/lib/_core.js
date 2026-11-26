@@ -36,20 +36,30 @@ function moneyCents(value) {
 async function famGatewayJson(url, options = {}) {
   let result;
   try {
-    result = await fetch(url, { ...options, signal: AbortSignal.timeout(15000) });
+    result = await fetch(url, {
+      ...options,
+      headers: { Accept: 'application/json', ...(options.headers || {}) },
+      signal: AbortSignal.timeout(15000)
+    });
   } catch (_) {
     throw fail('FamGateway could not be reached. Please try again.', 502);
   }
   const contentType = result.headers.get('content-type') || '';
   const responseText = await result.text();
   let payload = null;
-  if (contentType.includes('application/json')) {
-    try { payload = JSON.parse(responseText); } catch (_) {}
-  }
+  try { payload = JSON.parse(responseText); } catch (_) {}
   if (result.status === 408 && payload?.status === 'expired') return payload;
-  if (!result.ok || !payload || typeof payload !== 'object') {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
     console.error('FamGateway returned a non-JSON or unsuccessful response:', result.status, contentType);
-    throw fail('FamGateway payment service returned an invalid response. Please try again later.', 502);
+    throw fail(`FamGateway returned a non-JSON response (HTTP ${result.status}). Check the FamGateway API key and active gateway, then try again.`, 502);
+  }
+  if (!result.ok) {
+    console.error('FamGateway rejected the API request:', result.status, contentType);
+    if (result.status === 401 || result.status === 403)
+      throw fail('FamGateway rejected the API key. Check FAMGATEWAY_API_KEY in Vercel and confirm the key is active.', 502);
+    if (result.status === 429)
+      throw fail('FamGateway is rate-limiting requests. Wait a minute and try again.', 502);
+    throw fail(`FamGateway request failed (HTTP ${result.status}). Check gateway status and try again.`, 502);
   }
   return payload;
 }
