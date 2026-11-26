@@ -2,6 +2,24 @@
   "functions": {
     "api/[...path].js": {
       "maxDuration": 60
+    },
+    "api/pay/[action].js": {
+      "maxDuration": 60
+    },
+    "api/profile/[action].js": {
+      "maxDuration": 60
+    },
+    "api/reseller/[action].js": {
+      "maxDuration": 60
+    },
+    "api/admin/[action].js": {
+      "maxDuration": 60
+    },
+    "api/admin/products/[action].js": {
+      "maxDuration": 60
+    },
+    "api/admin/resellers/[action].js": {
+      "maxDuration": 60
     }
   }
 }
