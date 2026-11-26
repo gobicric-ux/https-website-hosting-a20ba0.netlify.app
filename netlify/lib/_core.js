@@ -265,9 +265,7 @@ function resellerMessage(status, message = '') {
 async function resellerRequest(action, fields = {}) {
   const apiKey = resellerApiKey.value();
   if (!apiKey) throw fail('Reseller API is not configured on the local server.', 503);
-  const masterKey = resellerMasterKey.value();
   const headers = { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' };
-  if (masterKey) headers['x-master-key'] = masterKey;
   let upstream;
   try {
     upstream = await fetch(RESELLER_API_URL, {
