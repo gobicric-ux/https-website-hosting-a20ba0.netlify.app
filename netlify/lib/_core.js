@@ -266,7 +266,7 @@ async function resellerRequest(action, fields = {}) {
   const apiKey = resellerApiKey.value();
   if (!apiKey) throw fail('Reseller API is not configured on the local server.', 503);
   const masterKey = resellerMasterKey.value();
-  const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+  const headers = { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' };
   if (masterKey) headers['x-master-key'] = masterKey;
   let upstream;
   try {
@@ -278,9 +278,14 @@ async function resellerRequest(action, fields = {}) {
   } catch (_) {
     throw fail('The reseller service could not be reached. Please try again.', 503);
   }
+  const contentType = upstream.headers.get('content-type') || '';
+  const responseText = await upstream.text();
   let result;
-  try { result = await upstream.json(); }
-  catch (_) { throw fail('The reseller service returned an invalid response.', 502); }
+  try { result = JSON.parse(responseText); }
+  catch (_) {
+    console.error('Reseller API returned a non-JSON response:', upstream.status, contentType);
+    throw fail(`The reseller service returned a non-JSON response (HTTP ${upstream.status}, ${contentType || 'unknown content type'}). Check the reseller API endpoint and credentials.`, 502);
+  }
   if (!upstream.ok || result?.status !== 'success') {
     const status = upstream.status || 502;
     throw fail(resellerMessage(status, result?.msg), status >= 400 ? status : 502);
