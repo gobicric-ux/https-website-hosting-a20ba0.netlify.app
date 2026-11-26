@@ -20,6 +20,9 @@
     },
     "api/admin/resellers/[action].js": {
       "maxDuration": 60
+    },
+    "api/admin/reseller/[action].js": {
+      "maxDuration": 60
     }
   }
 }
